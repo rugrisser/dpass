@@ -8,13 +8,16 @@ struct Grants {
 
 struct Verification {
     address grantedTo;
-    // Some Chain ID
     uint256 validUntil;
+    uint64 chainId;
 }
 
 contract KYC {
 
+    uint64 _chainId;
+
     mapping (address => Grants) _acl;
+    mapping (address => uint256) _validUntil;
 
     modifier manageGrants {
         require(_acl[msg.sender].manageGrants, "Not enough access");
@@ -26,11 +29,12 @@ contract KYC {
         _;
     }
 
-    constructor(address owner) {
+    constructor(address owner, uint64 chainId) {
         _acl[owner] = Grants({
             manageGrants: true,
             manageVerifications: true
         });
+        _chainId = chainId;
     }
 
     function addVerificator(address verificator) public manageGrants {
@@ -39,5 +43,9 @@ contract KYC {
     
     function removeVerificator(address verificator) public manageGrants {
         _acl[verificator].manageVerifications = false;
+    }
+
+    function issueVerification(address owner, uint256 validUntil) public manageVerifications {
+        _validUntil[owner] = validUntil;
     }
 }
