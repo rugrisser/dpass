@@ -56,6 +56,18 @@ contract IDO {
     }
 
     function finish() public {
-        status = Status.FINISHED;
+        if (totalAmount < softCap && finishTimestamp < block.timestamp) {
+            cancel();
+        } else if (totalAmount >= softCap && finishTimestamp < block.timestamp) {
+            status = Status.FINISHED;
+        } else if (totalAmount > hardCap) {
+            status = Status.FINISHED;
+        }
+    }
+
+    function cancel() private {
+        // Make moneyback
+
+        status = Status.CANCELED;
     }
 }
