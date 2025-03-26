@@ -20,7 +20,8 @@ contract IDO {
     LiquidityPool public immutable liquidityPool;
     Status public status = Status.STARTED;
 
-    mapping (address => uint256) public participants;
+    mapping (address => uint256) public participantTokens;
+    address[] public participants;
 
     IERC20 private immutable idoToken;
 
@@ -47,7 +48,21 @@ contract IDO {
         );
         require(success, "Token transfer failed");
 
-        participants[msg.sender] += tokenAmount;
+        participantTokens[msg.sender] += tokenAmount;
+
+        bool isParticipatedPreviously = false;
+
+        for (uint it = 0; it < participants.length; it++) {
+            if (participants[it] == msg.sender) {
+                isParticipatedPreviously = true;
+                break;
+            }
+        }
+
+        if (!isParticipatedPreviously) {
+            participants.push(msg.sender);
+        }
+
         totalAmount += tokenAmount;
 
         if (totalAmount > hardCap) {
@@ -67,6 +82,10 @@ contract IDO {
 
     function cancel() private {
         // Make moneyback
+
+        for (uint it = 0; it < participants.length; it++) {
+            // give rights to manage tokens from pool
+        }
 
         status = Status.CANCELED;
     }
