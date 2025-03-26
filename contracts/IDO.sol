@@ -2,14 +2,60 @@
 // Compatible with OpenZeppelin Contracts ^5.0.0
 pragma solidity ^0.8.22;
 
+import {KYC} from "./KYC.sol";
+import {LiquidityPool} from "./LiquidityPool.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 enum Status {
-    INITIALIZED, STARTED, FINISHED, CANCELED
+    STARTED, FINISHED, CANCELED
 }
 
 contract IDO {
 
-    uint256 softCap;
-    uint256 hardCap;
-    uint256 finishTimestamp;
-    Status status;
+    uint256 public immutable softCap;
+    uint256 public immutable hardCap;
+    uint256 public immutable finishTimestamp;
+    uint256 public totalAmount = 0;
+    KYC public immutable kyc;
+    LiquidityPool public immutable liquidityPool;
+    Status public status = Status.STARTED;
+
+    mapping (address => uint256) public participants;
+
+    IERC20 private immutable idoToken;
+
+    constructor(
+        uint256 _softCap, 
+        uint256 _hardCap,
+        uint256 _finishTimestamp,
+        address _kyc,
+        address _liquidityPool
+    ) {
+        softCap = _softCap;
+        hardCap = _hardCap;
+        finishTimestamp = _finishTimestamp;
+        kyc = KYC(_kyc);
+        liquidityPool = LiquidityPool(_liquidityPool);
+
+        idoToken = liquidityPool.anchorToken();
+    }
+
+    function participate(uint256 tokenAmount) public {
+        require(kyc.validUntil(msg.sender) >= block.timestamp, "Address is not verified");
+        (bool success, bytes memory data) = address(idoToken).delegatecall(
+            abi.encodeWithSignature("transfer(address,uint256)", address(liquidityPool), tokenAmount)
+        );
+        require(success, "Token transfer failed");
+
+        participants[msg.sender] += tokenAmount;
+        totalAmount += tokenAmount;
+
+        if (totalAmount > hardCap) {
+            finish();
+        }
+    }
+
+    function finish() public {
+        status = Status.FINISHED;
+    }
 }

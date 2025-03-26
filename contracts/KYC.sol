@@ -14,38 +14,38 @@ struct Verification {
 
 contract KYC {
 
-    uint64 _chainId;
+    uint64 chainId;
 
-    mapping (address => Grants) _acl;
-    mapping (address => uint256) _validUntil;
+    mapping (address => Grants) public acl;
+    mapping (address => uint256) public validUntil;
 
     modifier manageGrants {
-        require(_acl[msg.sender].manageGrants, "Not enough access");
+        require(acl[msg.sender].manageGrants, "Not enough access");
         _;
     }
 
     modifier manageVerifications {
-        require(_acl[msg.sender].manageVerifications, "Not enough access");
+        require(acl[msg.sender].manageVerifications, "Not enough access");
         _;
     }
 
-    constructor(address owner, uint64 chainId) {
-        _acl[owner] = Grants({
+    constructor(address owner, uint64 _chainId) {
+        acl[owner] = Grants({
             manageGrants: true,
             manageVerifications: true
         });
-        _chainId = chainId;
+        chainId = _chainId;
     }
 
     function addVerificator(address verificator) public manageGrants {
-        _acl[verificator].manageVerifications = true;
+        acl[verificator].manageVerifications = true;
     }
     
     function removeVerificator(address verificator) public manageGrants {
-        _acl[verificator].manageVerifications = false;
+        acl[verificator].manageVerifications = false;
     }
 
-    function issueVerification(address owner, uint256 validUntil) public manageVerifications {
-        _validUntil[owner] = validUntil;
+    function issueVerification(address owner, uint256 _validUntil) public manageVerifications {
+        validUntil[owner] = _validUntil;
     }
 }
