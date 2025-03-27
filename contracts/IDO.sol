@@ -7,7 +7,7 @@ import {LiquidityPool} from "./LiquidityPool.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 enum Status {
-    STARTED, FINISHED, CANCELED
+    ACTIVE, FINISHED, CANCELED
 }
 
 contract IDO {
@@ -18,7 +18,7 @@ contract IDO {
     uint256 public totalAmount = 0;
     KYC public immutable kyc;
     LiquidityPool public immutable liquidityPool;
-    Status public status = Status.STARTED;
+    Status public status = Status.ACTIVE;
 
     mapping (address => uint256) public participantTokens;
     address[] public participants;
@@ -42,9 +42,15 @@ contract IDO {
     }
 
     function participate(uint256 tokenAmount) public {
+        require(status == Status.ACTIVE, "IDO is not active");
+
+        if (finishTimestamp < block.timestamp) {
+            finish();
+        }
+
         require(kyc.validUntil(msg.sender) >= block.timestamp, "Address is not verified");
         (bool success, bytes memory data) = address(idoToken).delegatecall(
-            abi.encodeWithSignature("transfer(address,uint256)", address(liquidityPool), tokenAmount)
+            abi.encodeWithSignature("transfer(address,uint256)", address(this), tokenAmount)
         );
         require(success, "Token transfer failed");
 
@@ -74,17 +80,22 @@ contract IDO {
         if (totalAmount < softCap && finishTimestamp < block.timestamp) {
             cancel();
         } else if (totalAmount >= softCap && finishTimestamp < block.timestamp) {
-            status = Status.FINISHED;
+            finishSuccessfully();
         } else if (totalAmount > hardCap) {
-            status = Status.FINISHED;
+            finishSuccessfully();
         }
     }
 
-    function cancel() private {
-        // Make moneyback
+    function finishSuccessfully() private {
+        status = Status.FINISHED;
 
+        // add liquidity
+    }
+
+    function cancel() private {
         for (uint it = 0; it < participants.length; it++) {
-            // give rights to manage tokens from pool
+            address participant = participants[it];
+            idoToken.transfer(participant, participantTokens[participant]);
         }
 
         status = Status.CANCELED;
