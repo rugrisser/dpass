@@ -3,42 +3,53 @@
 pragma solidity ^0.8.22;
 
 import {KYC} from "./KYC.sol";
-import {LiquidityPool} from "./LiquidityPool.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 enum Status {
-    ACTIVE, FINISHED, CANCELED
+    ACTIVE, FREEZED, FINISHED, CANCELED
 }
 
-contract IDO {
+contract IDO is Ownable {
 
     uint256 public immutable softCap;
     uint256 public immutable hardCap;
     uint256 public immutable finishTimestamp;
+    uint256 public immutable unfreezeTimestamp;
     uint256 public totalAmount = 0;
+    IERC20 public immutable idoToken;
     KYC public immutable kyc;
-    LiquidityPool public immutable liquidityPool;
     Status public status = Status.ACTIVE;
 
     mapping (address => uint256) public participantTokens;
     address[] public participants;
 
-    IERC20 private immutable idoToken;
+    uint8 public immutable rewardPercent;
 
     constructor(
         uint256 _softCap, 
         uint256 _hardCap,
         uint256 _finishTimestamp,
+        uint256 _unfreezeTimestamp,
         address _kyc,
-        address _liquidityPool
-    ) {
+        address _idoToken,
+        address _owner,
+        uint8 _rewardPercent
+    ) Ownable(_owner) {
+        require(_softCap < _hardCap);
+        require(_finishTimestamp > block.timestamp);
+        require(_unfreezeTimestamp > block.timestamp);
+        require(_kyc != address(0));
+        require(_idoToken != address(0));
+        require(_rewardPercent < 100);
+
         softCap = _softCap;
         hardCap = _hardCap;
         finishTimestamp = _finishTimestamp;
+        unfreezeTimestamp = _unfreezeTimestamp;
         kyc = KYC(_kyc);
-        liquidityPool = LiquidityPool(_liquidityPool);
-
-        idoToken = liquidityPool.anchorToken();
+        idoToken = IERC20(_idoToken);
+        rewardPercent = _rewardPercent;
     }
 
     function participate(uint256 tokenAmount) public {
@@ -80,16 +91,22 @@ contract IDO {
         if (totalAmount < softCap && finishTimestamp < block.timestamp) {
             cancel();
         } else if (totalAmount >= softCap && finishTimestamp < block.timestamp) {
-            finishSuccessfully();
+            status = Status.FREEZED;
         } else if (totalAmount > hardCap) {
-            finishSuccessfully();
+            status = Status.FREEZED;
         }
     }
 
-    function finishSuccessfully() private {
+
+    function unfreezeTokens() public {
         status = Status.FINISHED;
 
-        // add liquidity
+        uint256 reward = totalAmount * rewardPercent / 100;
+        uint256 share = totalAmount - reward;
+
+        idoToken.transfer(owner(), reward);
+
+        // TGE
     }
 
     function cancel() private {
