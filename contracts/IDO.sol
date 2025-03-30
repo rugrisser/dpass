@@ -7,19 +7,22 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 enum Status {
-    ACTIVE, FREEZED, FINISHED, CANCELED
+    INITIALIZED, ACTIVE, FREEZED, FINISHED, CANCELED
 }
 
-contract IDO is Ownable {
+abstract contract IDO is Ownable {
 
     uint256 public immutable softCap;
     uint256 public immutable hardCap;
     uint256 public immutable finishTimestamp;
     uint256 public immutable unfreezeTimestamp;
+    uint256 public immutable poolMintAmount;
+    uint256 public immutable shareMintAmount;
     uint256 public totalAmount = 0;
     IERC20 public immutable idoToken;
+    IERC20 public immutable targetToken;
     KYC public immutable kyc;
-    Status public status = Status.ACTIVE;
+    Status public status = Status.INITIALIZED;
 
     mapping (address => uint256) public participantTokens;
     address[] public participants;
@@ -31,28 +34,41 @@ contract IDO is Ownable {
         uint256 _hardCap,
         uint256 _finishTimestamp,
         uint256 _unfreezeTimestamp,
-        address _kyc,
+        uint256 _poolMintAmount,
+        uint256 _shareMintAmount,
         address _idoToken,
+        address _targetToken,
+        address _kyc,
         address _owner,
         uint8 _rewardPercent
     ) Ownable(_owner) {
         require(_softCap < _hardCap);
         require(_finishTimestamp > block.timestamp);
         require(_unfreezeTimestamp > block.timestamp);
-        require(_kyc != address(0));
         require(_idoToken != address(0));
+        require(_targetToken != address(0));
+        require(_kyc != address(0));
         require(_rewardPercent < 100);
 
         softCap = _softCap;
         hardCap = _hardCap;
         finishTimestamp = _finishTimestamp;
         unfreezeTimestamp = _unfreezeTimestamp;
-        kyc = KYC(_kyc);
+        poolMintAmount = _poolMintAmount;
+        shareMintAmount = _shareMintAmount;
         idoToken = IERC20(_idoToken);
+        targetToken = IERC20(_targetToken);
+        kyc = KYC(_kyc);
         rewardPercent = _rewardPercent;
     }
 
-    function participate(uint256 tokenAmount) public {
+    function initialize() external {
+        uint256 balance = targetToken.balanceOf(address(this));
+        require(balance >= poolMintAmount + shareMintAmount, "Send tokens to contract");
+        status = Status.ACTIVE;
+    }
+
+    function participate(uint256 tokenAmount) external {
         require(status == Status.ACTIVE, "IDO is not active");
 
         if (finishTimestamp < block.timestamp) {
@@ -98,16 +114,28 @@ contract IDO is Ownable {
     }
 
 
-    function unfreezeTokens() public {
+    function generateTargetTokens() external {
+        require(unfreezeTimestamp <= block.timestamp);
+
         status = Status.FINISHED;
+        uint256 share = 0;
+        uint256 totalShare = 0;
+
+        for (uint it = 0; it < participants.length; it++) {
+            address participant = participants[it];
+            share = shareMintAmount * participantTokens[participant] / totalAmount;
+            totalShare += share;
+            targetToken.transfer(participant, share);
+        }
+
+        uint256 finalLiquidity = poolMintAmount + (shareMintAmount - totalShare);
+        addLiquidity(finalLiquidity);
 
         uint256 reward = totalAmount * rewardPercent / 100;
-        uint256 share = totalAmount - reward;
-
         idoToken.transfer(owner(), reward);
-
-        // TGE
     }
+
+    function addLiquidity(uint256 liquidity) internal virtual;
 
     function cancel() private {
         for (uint it = 0; it < participants.length; it++) {
