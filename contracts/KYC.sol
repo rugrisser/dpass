@@ -30,6 +30,7 @@ contract KYC {
     }
 
     constructor(address owner, uint64 _chainId) {
+        require(owner != address(0x0));
         acl[owner] = Grants({
             manageGrants: true,
             manageVerifications: true
