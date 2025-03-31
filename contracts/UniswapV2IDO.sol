@@ -3,11 +3,12 @@
 pragma solidity ^0.8.22;
 
 import {IDO} from "./IDO.sol";
-import {IUniswapV2Router02} from "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+import {TransferHelper} from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import {IUniswapV2Pair} from '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
 
 contract UniswapV2IDO is IDO {
 
-    IUniswapV2Router02 private immutable uniswapRouter;
+    IUniswapV2Pair private immutable uniswapPair;
 
     constructor(
         uint256 _softCap, 
@@ -20,7 +21,7 @@ contract UniswapV2IDO is IDO {
         address _targetToken,
         address _kyc,
         address _owner,
-        address _uniswapRouter,
+        address _uniswapPair,
         uint8 _rewardPercent
     ) IDO(
         _softCap, 
@@ -35,15 +36,12 @@ contract UniswapV2IDO is IDO {
         _owner,
         _rewardPercent
     ) {
-        require(_uniswapRouter != address(0));
-        uniswapRouter = IUniswapV2Router02(_uniswapRouter);
+        require(_uniswapPair != address(0));
+        uniswapPair = IUniswapV2Pair(_uniswapPair);
     }
 
     function addLiquidity(uint256 liquidity) internal override {
-        // uniswapRouter.addLiquidity(
-        //     idoToken,
-        //     targetToken,
-
-        // );
+        TransferHelper.safeTransfer(address(targetToken), address(uniswapPair), liquidity);
+        uniswapPair.mint(owner());
     }
 }
