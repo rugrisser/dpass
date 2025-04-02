@@ -63,6 +63,8 @@ abstract contract IDO is Ownable {
     }
 
     function initialize() external {
+        require(status == Status.INITIALIZED, "IDO is already active");
+
         uint256 balance = targetToken.balanceOf(address(this));
         require(balance >= poolMintAmount + shareMintAmount, "Send tokens to contract");
         status = Status.ACTIVE;
@@ -104,6 +106,8 @@ abstract contract IDO is Ownable {
     }
 
     function finish() public {
+        require(status == Status.ACTIVE, "IDO is not active");
+
         if (totalAmount < softCap && finishTimestamp < block.timestamp) {
             cancel();
         } else if (totalAmount >= softCap && finishTimestamp < block.timestamp) {
@@ -115,6 +119,7 @@ abstract contract IDO is Ownable {
 
 
     function generateTargetTokens() external {
+        require(status == Status.FREEZED, "Tokens are not freezed");
         require(unfreezeTimestamp <= block.timestamp);
 
         status = Status.FINISHED;
@@ -135,9 +140,9 @@ abstract contract IDO is Ownable {
         idoToken.transfer(owner(), reward);
     }
 
-    function addLiquidity(uint256 liquidity) internal virtual;
+    function cancel() public {
+        require(status == Status.ACTIVE || status == Status.INITIALIZED, "Wrong status");
 
-    function cancel() private {
         for (uint it = 0; it < participants.length; it++) {
             address participant = participants[it];
             idoToken.transfer(participant, participantTokens[participant]);
@@ -145,4 +150,6 @@ abstract contract IDO is Ownable {
 
         status = Status.CANCELED;
     }
+
+    function addLiquidity(uint256 liquidity) internal virtual;
 }
