@@ -15,7 +15,6 @@ const uniswapV2IDOModule = buildModule("UniswapV2IDO", (module) => {
     const uniswapPair = vars.get("UNISWAP_PAIR_ADDRESS");
     const rewardPercent = vars.get("REWARD_PERCENT");
 
-
     const ido = module.contract("UniswapV2IDO", [
         softCap,
         hardCap,

@@ -3,7 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 
 const ETHERSCAN_API_KEY = vars.get("ETHERSCAN_API_KEY");
 const INFURA_API_KEY = vars.get("INFURA_API_KEY");
-const SEPOLIA_PRIVATE_KEY = vars.get("SEPOLIA_PRIVATE_KEY");
+const PRIVATE_KEY = vars.get("PRIVATE_KEY");
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -19,7 +19,15 @@ const config: HardhatUserConfig = {
   networks: {
     sepolia: {
       url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
-      accounts: [SEPOLIA_PRIVATE_KEY],
+      accounts: [PRIVATE_KEY],
+    },
+    bsc_testnet: {
+      url: `https://bsc-testnet.infura.io/v3/${INFURA_API_KEY}`,
+      accounts: [PRIVATE_KEY],
+    },
+    avalanche_fuji: {
+      url: `https://avalanche-fuji.infura.io/v3/${INFURA_API_KEY}`,
+      accounts: [PRIVATE_KEY],
     },
   },
   etherscan: {

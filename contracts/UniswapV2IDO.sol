@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0-only
-// Compatible with OpenZeppelin Contracts ^5.0.0
 pragma solidity ^0.8.22;
 
 import {IDO} from "./IDO.sol";
@@ -40,8 +39,9 @@ contract UniswapV2IDO is IDO {
         uniswapPair = IUniswapV2Pair(_uniswapPair);
     }
 
-    function addLiquidity(uint256 liquidity) internal override {
-        TransferHelper.safeTransfer(address(targetToken), address(uniswapPair), liquidity);
+    function addLiquidity(uint256 idoLiquidity, uint256 targetLiquidity) internal override {
+        TransferHelper.safeTransfer(address(idoToken), address(uniswapPair), idoLiquidity);
+        TransferHelper.safeTransfer(address(targetToken), address(uniswapPair), targetLiquidity);
         uniswapPair.mint(owner());
     }
 }

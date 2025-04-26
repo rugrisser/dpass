@@ -78,9 +78,7 @@ abstract contract IDO is Ownable {
         }
 
         require(kyc.validUntil(msg.sender) >= block.timestamp, "Address is not verified");
-        (bool success, bytes memory data) = address(idoToken).delegatecall(
-            abi.encodeWithSignature("transfer(address,uint256)", address(this), tokenAmount)
-        );
+        bool success = idoToken.transferFrom(msg.sender, address(this), tokenAmount);
         require(success, "Token transfer failed");
 
         participantTokens[msg.sender] += tokenAmount;
@@ -133,11 +131,12 @@ abstract contract IDO is Ownable {
             targetToken.transfer(participant, share);
         }
 
-        uint256 finalLiquidity = poolMintAmount + (shareMintAmount - totalShare);
-        addLiquidity(finalLiquidity);
-
         uint256 reward = totalAmount * rewardPercent / 100;
+        uint256 finalIdoLiquidity = totalAmount - reward;
+        uint256 finalTargetLiquidity = poolMintAmount + (shareMintAmount - totalShare);
+
         idoToken.transfer(owner(), reward);
+        addLiquidity(finalIdoLiquidity, finalTargetLiquidity);
     }
 
     function cancel() public {
@@ -151,5 +150,5 @@ abstract contract IDO is Ownable {
         status = Status.CANCELED;
     }
 
-    function addLiquidity(uint256 liquidity) internal virtual;
+    function addLiquidity(uint256 idoLiquidity, uint256 targetLiquidity) internal virtual;
 }
