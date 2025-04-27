@@ -85,6 +85,19 @@ contract BridgeFacade is Ownable, ICelerReceiver {
             return ExecutionStatus.Fail;
         }
 
-        return ExecutionStatus.Success;
+        if (destinationAddresses[_srcChainId] != _sender) {
+            return ExecutionStatus.Fail;
+        }
+
+        (address verifiedAddress, uint256 expiration) = abi.decode(_message, (address, uint256));
+        (bool ok, bytes memory result) = address(kycContract).call(
+            abi.encodeWithSignature("issueVerification(address,uint256)", verifiedAddress, expiration)
+        );
+
+        if (ok) {
+            return ExecutionStatus.Success;
+        }
+
+        return ExecutionStatus.Fail;
     }
 }
