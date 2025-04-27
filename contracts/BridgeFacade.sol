@@ -61,13 +61,13 @@ contract BridgeFacade is Ownable, ICelerReceiver {
     }
 
     function transferVerification(uint256 chainId, address verifiedAddress) external payable {
-        require(chainId != block.chainid);
+        require(chainId != block.chainid, "You should transfer to another chain");
 
         address destination = destinationAddresses[chainId];
-        require(destination != address(0));
+        require(destination != address(0), "Destination not found");
 
         uint256 expiration = kycContract.validUntil(verifiedAddress);
-        require(expiration != 0);
+        require(expiration >= block.timestamp, "Verification is expired");
 
         bytes memory payload = abi.encode(verifiedAddress, expiration);
 

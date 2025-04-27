@@ -2,6 +2,7 @@ import { HardhatUserConfig, vars } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 
 const ETHERSCAN_API_KEY = vars.get("ETHERSCAN_API_KEY");
+const BSCSCAN_API_KEY = vars.get("BSCSCAN_API_KEY");
 const INFURA_API_KEY = vars.get("INFURA_API_KEY");
 const PRIVATE_KEY = vars.get("PRIVATE_KEY");
 
@@ -31,7 +32,31 @@ const config: HardhatUserConfig = {
     },
   },
   etherscan: {
-    apiKey: ETHERSCAN_API_KEY,
+    apiKey: {
+      sepolia: ETHERSCAN_API_KEY,
+      bscTestnet: BSCSCAN_API_KEY,
+    },
+    customChains: [
+      {
+        network: "bscTestnet",
+        chainId: 97,
+        urls: {
+          apiURL: "https://api-testnet.bscscan.com/api",
+          browserURL: "https://bscscan.com",
+        },
+      },
+      {
+        network: "avalancheFujiTestnet",
+        chainId: 43113,
+        urls: {
+          apiURL: "https://api-testnet.snowtrace.io/api",
+          browserURL: "https://testnet.snowtrace.io"
+        },
+      }
+    ],
+  },
+  sourcify: {
+    enabled: true
   },
 };
 
