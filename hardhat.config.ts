@@ -1,6 +1,7 @@
 import { HardhatUserConfig, vars } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 
+const POLYGONSCAN_API_KEY = vars.get("POLYGONSCAN_API_KEY");
 const ETHERSCAN_API_KEY = vars.get("ETHERSCAN_API_KEY");
 const BSCSCAN_API_KEY = vars.get("BSCSCAN_API_KEY");
 const INFURA_API_KEY = vars.get("INFURA_API_KEY");
@@ -18,6 +19,14 @@ const config: HardhatUserConfig = {
     }
   },
   networks: {
+    polygon: {
+      url: `https://polygon-mainnet.infura.io/v3/${INFURA_API_KEY}`,
+      accounts: [PRIVATE_KEY],
+    },
+    avalanche: {
+      url: `https://avalanche-mainnet.infura.io/v3/${INFURA_API_KEY}`,
+      accounts: [PRIVATE_KEY],
+    },
     sepolia: {
       url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
       accounts: [PRIVATE_KEY],
@@ -33,8 +42,11 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
+      polygon: POLYGONSCAN_API_KEY,
+      avalanche: "snowtrace", 
       sepolia: ETHERSCAN_API_KEY,
       bscTestnet: BSCSCAN_API_KEY,
+      avalancheFujiTestnet: "snowtrace",
     },
     customChains: [
       {
@@ -42,7 +54,7 @@ const config: HardhatUserConfig = {
         chainId: 97,
         urls: {
           apiURL: "https://api-testnet.bscscan.com/api",
-          browserURL: "https://bscscan.com",
+          browserURL: "https://testnet.bscscan.com",
         },
       },
       {

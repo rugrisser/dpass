@@ -45,7 +45,7 @@ contract BridgeFacade is Ownable, ICelerReceiver {
         require(_kycContract != address(0));
         require(_messageBus != address(0));
 
-        kycContract = KYC(kycContract);
+        kycContract = KYC(_kycContract);
         messageBus = _messageBus;
         sender = ICelerMessageBusSender(_messageBus);
     }
@@ -67,7 +67,7 @@ contract BridgeFacade is Ownable, ICelerReceiver {
         require(destination != address(0), "Destination not found");
 
         uint256 expiration = kycContract.validUntil(verifiedAddress);
-        require(expiration >= block.timestamp, "Verification is expired");
+        require(expiration >= block.timestamp, "Verification is expired ");
 
         bytes memory payload = abi.encode(verifiedAddress, expiration);
 
