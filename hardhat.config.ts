@@ -19,6 +19,10 @@ const config: HardhatUserConfig = {
     }
   },
   networks: {
+    bsc: {
+      url: `https://bsc-mainnet.infura.io/v3/${INFURA_API_KEY}`,
+      accounts: [PRIVATE_KEY],
+    },
     polygon: {
       url: `https://polygon-mainnet.infura.io/v3/${INFURA_API_KEY}`,
       accounts: [PRIVATE_KEY],
@@ -42,6 +46,7 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
+      bsc: BSCSCAN_API_KEY,
       polygon: POLYGONSCAN_API_KEY,
       avalanche: "snowtrace", 
       sepolia: ETHERSCAN_API_KEY,
