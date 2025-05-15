@@ -38,6 +38,9 @@ contract KYC {
     }
 
     function issueVerification(address owner, uint256 _validUntil) public manageVerifications {
+        require(_validUntil > block.timestamp, "Verification should be actual");
+        require(_validUntil > validUntil[owner], "Forbidden to reduce verification period");
+
         validUntil[owner] = _validUntil;
     }
 }
